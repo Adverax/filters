@@ -2,77 +2,72 @@ package filters
 
 import (
 	"regexp"
-	"strings"
 )
 
 type Filter interface {
 	IsMatch(text string) bool
 }
 
-type filterOr []Filter
-
-func (that filterOr) IsMatch(text string) bool {
-	for _, re := range that {
-		if re.IsMatch(text) {
-			return true
-		}
-	}
-	return false
-}
-
-type filterRegexp struct {
-	re *regexp.Regexp
-}
-
-func (that *filterRegexp) IsMatch(text string) bool {
-	return that.re.Match([]byte(text))
-}
-
-type filterExact struct {
-	text string
-}
-
-func (that *filterExact) IsMatch(text string) bool {
-	return that.text == text
-}
-
-type filterPrefix struct {
-	text string
-}
-
-func (that *filterPrefix) IsMatch(text string) bool {
-	return strings.HasPrefix(text, that.text)
-}
-
-type filterSuffix struct {
-	text string
-}
-
-func (that *filterSuffix) IsMatch(text string) bool {
-	return strings.HasSuffix(text, that.text)
-}
-
-type filterConst struct {
-	allow bool
-}
-
-func (that *filterConst) IsMatch(text string) bool {
-	return that.allow
-}
-
-type filterAllowDeny struct {
-	allow Filter
-	deny  Filter
-}
-
-func (that *filterAllowDeny) IsMatch(text string) bool {
-	if that.deny != nil && that.deny.IsMatch(text) {
-		return false
-	}
-	return that.allow == nil || that.allow.IsMatch(text)
-}
-
 var (
-	AllowFilter Filter = &filterConst{allow: true}
-	DenyFilter  Filter = &filterConst{allow: false}
+	AlwaysAllow Filter = &filterConst{allow: true}
+	AlwaysDeny  Filter = &filterConst{allow: false}
 )
+
+func AND(filters ...Filter) Filter {
+	return filterAnd(filters)
+}
+
+func OR(filters ...Filter) Filter {
+	return filterOr(filters)
+}
+
+func NOT(filter Filter) Filter {
+	return &filterNot{filter: filter}
+}
+
+func Regexp(text string) (Filter, error) {
+	re, err := regexp.Compile(text)
+	if err != nil {
+		return nil, err
+	}
+
+	return &filterRegexp{re: re}, nil
+}
+
+func Exact(text string) Filter {
+	return &filterExact{text: text}
+}
+
+func Prefix(text string) Filter {
+	return &filterPrefix{text: text}
+}
+
+func Suffix(text string) Filter {
+	return &filterSuffix{text: text}
+}
+
+func Allow(filter Filter) Filter {
+	return &filterAllowDeny{
+		allow: filter,
+	}
+}
+
+func Deny(filter Filter) Filter {
+	return &filterAllowDeny{
+		deny: filter,
+	}
+}
+
+func AllowDeny(allow Filter, deny Filter) Filter {
+	return &filterAllowDeny{
+		allow: allow,
+		deny:  deny,
+	}
+}
+
+func Must(f Filter, err error) Filter {
+	if err != nil {
+		panic(err)
+	}
+	return f
+}

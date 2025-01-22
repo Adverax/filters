@@ -5,13 +5,7 @@ import (
 )
 
 func TestBuilder_AllowExact(t *testing.T) {
-	filter, err := NewBuilder().
-		AllowExact("example").
-		Build()
-	if err != nil {
-		t.Fatalf("Failed to build filter: %v", err)
-	}
-
+	filter := Allow(Exact("example"))
 	if !filter.IsMatch("example") {
 		t.Errorf("Expected 'example' to be allowed")
 	}
@@ -21,13 +15,7 @@ func TestBuilder_AllowExact(t *testing.T) {
 }
 
 func TestBuilder_DenyExact(t *testing.T) {
-	filter, err := NewBuilder().
-		DenyExact("test").
-		Build()
-	if err != nil {
-		t.Fatalf("Failed to build filter: %v", err)
-	}
-
+	filter := Deny(Exact("test"))
 	if filter.IsMatch("test") {
 		t.Errorf("Expected 'test' to be denied")
 	}
@@ -37,13 +25,7 @@ func TestBuilder_DenyExact(t *testing.T) {
 }
 
 func TestBuilder_AllowRegexp(t *testing.T) {
-	filter, err := NewBuilder().
-		AllowRegexp(`^example.*`).
-		Build()
-	if err != nil {
-		t.Fatalf("Failed to build filter: %v", err)
-	}
-
+	filter := Allow(Must(Regexp(`^example.*`)))
 	if !filter.IsMatch("example123") {
 		t.Errorf("Expected 'example123' to be allowed")
 	}
@@ -53,13 +35,7 @@ func TestBuilder_AllowRegexp(t *testing.T) {
 }
 
 func TestBuilder_DenyRegexp(t *testing.T) {
-	filter, err := NewBuilder().
-		DenyRegexp(`^test.*`).
-		Build()
-	if err != nil {
-		t.Fatalf("Failed to build filter: %v", err)
-	}
-
+	filter := Deny(Must(Regexp(`^test.*`)))
 	if filter.IsMatch("test123") {
 		t.Errorf("Expected 'test123' to be denied")
 	}
@@ -69,13 +45,7 @@ func TestBuilder_DenyRegexp(t *testing.T) {
 }
 
 func TestBuilder_AllowPrefix(t *testing.T) {
-	filter, err := NewBuilder().
-		AllowPrefix("example").
-		Build()
-	if err != nil {
-		t.Fatalf("Failed to build filter: %v", err)
-	}
-
+	filter := Allow(Prefix("example"))
 	if !filter.IsMatch("example123") {
 		t.Errorf("Expected 'example123' to be allowed")
 	}
@@ -85,13 +55,7 @@ func TestBuilder_AllowPrefix(t *testing.T) {
 }
 
 func TestBuilder_DenyPrefix(t *testing.T) {
-	filter, err := NewBuilder().
-		DenyPrefix("test").
-		Build()
-	if err != nil {
-		t.Fatalf("Failed to build filter: %v", err)
-	}
-
+	filter := Deny(Prefix("test"))
 	if filter.IsMatch("test123") {
 		t.Errorf("Expected 'test123' to be denied")
 	}
@@ -101,13 +65,7 @@ func TestBuilder_DenyPrefix(t *testing.T) {
 }
 
 func TestBuilder_AllowSuffix(t *testing.T) {
-	filter, err := NewBuilder().
-		AllowSuffix("example").
-		Build()
-	if err != nil {
-		t.Fatalf("Failed to build filter: %v", err)
-	}
-
+	filter := Allow(Suffix("example"))
 	if !filter.IsMatch("123example") {
 		t.Errorf("Expected '123example' to be allowed")
 	}
@@ -117,13 +75,7 @@ func TestBuilder_AllowSuffix(t *testing.T) {
 }
 
 func TestBuilder_DenySuffix(t *testing.T) {
-	filter, err := NewBuilder().
-		DenySuffix("test").
-		Build()
-	if err != nil {
-		t.Fatalf("Failed to build filter: %v", err)
-	}
-
+	filter := Deny(Suffix("test"))
 	if filter.IsMatch("123test") {
 		t.Errorf("Expected '123test' to be denied")
 	}
