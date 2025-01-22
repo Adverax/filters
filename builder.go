@@ -24,46 +24,6 @@ type Builder struct {
 	deny  []*def
 }
 
-func (that *Builder) AllowExact(text string) *Builder {
-	that.allow = append(that.allow, &def{text: text, typ: MatchFilterExact})
-	return that
-}
-
-func (that *Builder) DenyExact(text string) *Builder {
-	that.deny = append(that.deny, &def{text: text, typ: MatchFilterExact})
-	return that
-}
-
-func (that *Builder) AllowRegexp(text string) *Builder {
-	that.allow = append(that.allow, &def{text: text, typ: MatchFilterRegexp})
-	return that
-}
-
-func (that *Builder) DenyRegexp(text string) *Builder {
-	that.deny = append(that.deny, &def{text: text, typ: MatchFilterRegexp})
-	return that
-}
-
-func (that *Builder) AllowPrefix(text string) *Builder {
-	that.allow = append(that.allow, &def{text: text, typ: MatchFilterPrefix})
-	return that
-}
-
-func (that *Builder) DenyPrefix(text string) *Builder {
-	that.deny = append(that.deny, &def{text: text, typ: MatchFilterPrefix})
-	return that
-}
-
-func (that *Builder) AllowSuffix(text string) *Builder {
-	that.allow = append(that.allow, &def{text: text, typ: MatchFilterSuffix})
-	return that
-}
-
-func (that *Builder) DenySuffix(text string) *Builder {
-	that.deny = append(that.deny, &def{text: text, typ: MatchFilterSuffix})
-	return that
-}
-
 func (that *Builder) Allow(typ FilterType, text string) *Builder {
 	that.allow = append(that.allow, &def{text: text, typ: typ})
 	return that
@@ -74,15 +34,47 @@ func (that *Builder) Deny(typ FilterType, text string) *Builder {
 	return that
 }
 
+func (that *Builder) AllowExact(text string) *Builder {
+	return that.Allow(MatchFilterExact, text)
+}
+
+func (that *Builder) DenyExact(text string) *Builder {
+	return that.Deny(MatchFilterExact, text)
+}
+
+func (that *Builder) AllowRegexp(text string) *Builder {
+	return that.Allow(MatchFilterRegexp, text)
+}
+
+func (that *Builder) DenyRegexp(text string) *Builder {
+	return that.Deny(MatchFilterRegexp, text)
+}
+
+func (that *Builder) AllowPrefix(text string) *Builder {
+	return that.Allow(MatchFilterPrefix, text)
+}
+
+func (that *Builder) DenyPrefix(text string) *Builder {
+	return that.Deny(MatchFilterPrefix, text)
+}
+
+func (that *Builder) AllowSuffix(text string) *Builder {
+	return that.Allow(MatchFilterSuffix, text)
+}
+
+func (that *Builder) DenySuffix(text string) *Builder {
+	return that.Deny(MatchFilterSuffix, text)
+}
+
 func (that *Builder) Build() (Filter, error) {
 	allow, err := that.build(that.allow)
 	if err != nil {
-		return nil, fmt.Errorf("NewMatchFilter: %w", err)
+		return nil, fmt.Errorf("NewFilter: %w", err)
 	}
 
 	deny, err := that.build(that.deny)
 	if err != nil {
-		return nil, fmt.Errorf("NewMatchFilter: %w", err)
+		return nil, fmt.Errorf("NewFilter: %w", err)
 	}
 
 	return &filterAllowDeny{
@@ -100,7 +92,7 @@ func (that *Builder) build(
 	case 1:
 		return that.newFilter(defs[0])
 	default:
-		filters := make(filterMulti, 0)
+		filters := make(filterOr, 0)
 		for _, def := range defs {
 			filter, err := that.newFilter(def)
 			if err != nil {

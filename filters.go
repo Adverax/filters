@@ -9,9 +9,9 @@ type Filter interface {
 	IsMatch(text string) bool
 }
 
-type filterMulti []Filter
+type filterOr []Filter
 
-func (that filterMulti) IsMatch(text string) bool {
+func (that filterOr) IsMatch(text string) bool {
 	for _, re := range that {
 		if re.IsMatch(text) {
 			return true
