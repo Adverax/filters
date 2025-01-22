@@ -5,7 +5,6 @@
 ## Features
 
 - Simple and declarative filter definitions.
-- Support for chaining and combining filters.
 - Flexible configuration options for custom logic.
 - Built-in utilities for common filtering tasks.
 
@@ -18,7 +17,9 @@ go get github.com/adverax/filters
 ```
 
 ## Overview
-The filter mechanism based on allow/deny relations works by defining rules that either allow or deny certain text patterns. These rules are combined to determine whether a given text should be accepted or rejected. Here is a brief description of the components involved:  
+The filter mechanism based on allow/deny relations works by defining rules that either allow or deny certain text patterns. These rules are combined to determine whether a given text should be accepted or rejected. 
+
+Here is a brief description of the components involved:  
 Filter Interface: This interface defines a method IsMatch(text string) bool that checks if a given text matches the filter criteria.  
 Filter Types: Various filter types implement the Filter interface, such as:  
 - filterExact: Matches text exactly.

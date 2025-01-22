@@ -1,124 +1,92 @@
 package filters
 
 import (
-	"fmt"
 	"regexp"
 )
 
-const (
-	MatchFilterExact FilterType = iota
-	MatchFilterRegexp
-	MatchFilterPrefix
-	MatchFilterSuffix
-)
-
-type FilterType int
-
-type def struct {
-	text string
-	typ  FilterType
-}
-
 type Builder struct {
-	allow []*def
-	deny  []*def
+	allow filterOr
+	deny  filterOr
+	err   error
 }
 
-func (that *Builder) Allow(typ FilterType, text string) *Builder {
-	that.allow = append(that.allow, &def{text: text, typ: typ})
+func (that *Builder) Allow(filter ...Filter) *Builder {
+	that.allow = append(that.allow, filter...)
 	return that
 }
 
-func (that *Builder) Deny(typ FilterType, text string) *Builder {
-	that.deny = append(that.deny, &def{text: text, typ: typ})
+func (that *Builder) Deny(filter ...Filter) *Builder {
+	that.deny = append(that.deny, filter...)
 	return that
 }
 
 func (that *Builder) AllowExact(text string) *Builder {
-	return that.Allow(MatchFilterExact, text)
+	return that.Allow(&filterExact{text: text})
 }
 
 func (that *Builder) DenyExact(text string) *Builder {
-	return that.Deny(MatchFilterExact, text)
+	return that.Deny(&filterExact{text: text})
 }
 
 func (that *Builder) AllowRegexp(text string) *Builder {
-	return that.Allow(MatchFilterRegexp, text)
+	re, err := regexp.Compile(text)
+	if err != nil {
+		that.error(err)
+		return that
+	}
+	return that.Allow(&filterRegexp{re: re})
 }
 
 func (that *Builder) DenyRegexp(text string) *Builder {
-	return that.Deny(MatchFilterRegexp, text)
+	re, err := regexp.Compile(text)
+	if err != nil {
+		that.error(err)
+		return that
+	}
+	return that.Deny(&filterRegexp{re: re})
 }
 
 func (that *Builder) AllowPrefix(text string) *Builder {
-	return that.Allow(MatchFilterPrefix, text)
+	return that.Allow(&filterPrefix{text: text})
 }
 
 func (that *Builder) DenyPrefix(text string) *Builder {
-	return that.Deny(MatchFilterPrefix, text)
+	return that.Deny(&filterPrefix{text: text})
 }
 
 func (that *Builder) AllowSuffix(text string) *Builder {
-	return that.Allow(MatchFilterSuffix, text)
+	return that.Allow(&filterSuffix{text: text})
 }
 
 func (that *Builder) DenySuffix(text string) *Builder {
-	return that.Deny(MatchFilterSuffix, text)
+	return that.Deny(&filterSuffix{text: text})
 }
 
 func (that *Builder) Build() (Filter, error) {
-	allow, err := that.build(that.allow)
-	if err != nil {
-		return nil, fmt.Errorf("NewFilter: %w", err)
-	}
-
-	deny, err := that.build(that.deny)
-	if err != nil {
-		return nil, fmt.Errorf("NewFilter: %w", err)
+	if that.err != nil {
+		return nil, that.err
 	}
 
 	return &filterAllowDeny{
-		allow: allow,
-		deny:  deny,
+		allow: that.build(that.allow),
+		deny:  that.build(that.deny),
 	}, nil
 }
 
-func (that *Builder) build(
-	defs []*def,
-) (filter Filter, err error) {
-	switch len(defs) {
+func (that *Builder) build(filters filterOr) Filter {
+	switch len(filters) {
 	case 0:
-		return nil, nil
+		return nil
 	case 1:
-		return that.newFilter(defs[0])
+		return filters[0]
 	default:
-		filters := make(filterOr, 0)
-		for _, def := range defs {
-			filter, err := that.newFilter(def)
-			if err != nil {
-				return nil, fmt.Errorf("newFilter: %w", err)
-			}
-			filters = append(filters, filter)
-		}
-
-		return filters, nil
+		return filters
 	}
 }
 
-func (that *Builder) newFilter(def *def) (Filter, error) {
-	switch def.typ {
-	case MatchFilterRegexp:
-		re, err := regexp.Compile(def.text)
-		if err != nil {
-			return nil, fmt.Errorf("regexp.Compile: %w", err)
-		}
-		return &filterRegexp{re: re}, nil
-	case MatchFilterPrefix:
-		return &filterPrefix{text: def.text}, nil
-	case MatchFilterSuffix:
-		return &filterSuffix{text: def.text}, nil
-	default:
-		return &filterExact{text: def.text}, nil
+func (that *Builder) error(err error) {
+	if that.err == nil {
+		that.err = err
 	}
 }
 
