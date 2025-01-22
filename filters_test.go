@@ -25,7 +25,7 @@ func TestBuilder_DenyExact(t *testing.T) {
 }
 
 func TestBuilder_AllowRegexp(t *testing.T) {
-	filter := Allow(Must(Regexp(`^example.*`)))
+	filter := Allow(Must(Regex(`^example.*`)))
 	if !filter.IsMatch("example123") {
 		t.Errorf("Expected 'example123' to be allowed")
 	}
@@ -35,7 +35,7 @@ func TestBuilder_AllowRegexp(t *testing.T) {
 }
 
 func TestBuilder_DenyRegexp(t *testing.T) {
-	filter := Deny(Must(Regexp(`^test.*`)))
+	filter := Deny(Must(Regex(`^test.*`)))
 	if filter.IsMatch("test123") {
 		t.Errorf("Expected 'test123' to be denied")
 	}

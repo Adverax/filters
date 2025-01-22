@@ -5,6 +5,18 @@ import (
 	"strings"
 )
 
+type filterAllowDeny struct {
+	allow Filter
+	deny  Filter
+}
+
+func (that *filterAllowDeny) IsMatch(text string) bool {
+	if that.deny != nil && that.deny.IsMatch(text) {
+		return false
+	}
+	return that.allow == nil || that.allow.IsMatch(text)
+}
+
 type filterOr []Filter
 
 func (that filterOr) IsMatch(text string) bool {
@@ -35,11 +47,35 @@ func (that *filterNot) IsMatch(text string) bool {
 	return !that.filter.IsMatch(text)
 }
 
-type filterRegexp struct {
+type filterConst struct {
+	allow bool
+}
+
+func (that *filterConst) IsMatch(text string) bool {
+	return that.allow
+}
+
+type filterMinLength struct {
+	minLen int
+}
+
+func (that *filterMinLength) IsMatch(text string) bool {
+	return len(text) >= that.minLen
+}
+
+type filterMaxLength struct {
+	maxLen int
+}
+
+func (that *filterMaxLength) IsMatch(text string) bool {
+	return len(text) <= that.maxLen
+}
+
+type filterRegex struct {
 	re *regexp.Regexp
 }
 
-func (that *filterRegexp) IsMatch(text string) bool {
+func (that *filterRegex) IsMatch(text string) bool {
 	return that.re.Match([]byte(text))
 }
 
@@ -65,24 +101,4 @@ type filterSuffix struct {
 
 func (that *filterSuffix) IsMatch(text string) bool {
 	return strings.HasSuffix(text, that.text)
-}
-
-type filterConst struct {
-	allow bool
-}
-
-func (that *filterConst) IsMatch(text string) bool {
-	return that.allow
-}
-
-type filterAllowDeny struct {
-	allow Filter
-	deny  Filter
-}
-
-func (that *filterAllowDeny) IsMatch(text string) bool {
-	if that.deny != nil && that.deny.IsMatch(text) {
-		return false
-	}
-	return that.allow == nil || that.allow.IsMatch(text)
 }
